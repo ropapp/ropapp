@@ -1,5 +1,5 @@
 package businessLogic;
 
-public class User {
+public class User extends Node{
 
 }

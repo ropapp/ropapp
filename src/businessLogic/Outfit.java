@@ -1,5 +1,5 @@
 package businessLogic;
 
-public class Outfit {
+public class Outfit extends Node{
 
 }

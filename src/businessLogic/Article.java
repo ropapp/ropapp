@@ -1,5 +1,5 @@
 package businessLogic;
 
-public class Article {
+public class Article extends Node{
 
 }
