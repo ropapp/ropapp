@@ -1,73 +1,95 @@
 package businessLogic;
 
 public class Graph {
-	public List users,articles,outfits;
-	public List wears, //from user to article or outfit
-				includes, //from outift to article
-				matches, //from article to article (Bidirectional)
-				liked, //from user to outfit or article
-				created; //from user to outfit
+	List articles=new List();
+	List users=new List();
+	List outfits = new List();
 	
-	/**
-	 * This method traverses over the graph
-	 * @return
-	 */
-	public List traverse() {
-		//TODO implement the graph traversing algorithm
-		return null;
+	public void addArticle(Article a) {
+		Article temp=(Article)articles.head;
+		while(temp!=null) {
+			Edge e = new Edge(temp,a);
+			temp.Adjacency.put(e);
+			a.Adjacency.put(e);
+			temp=(Article)temp.next;
+		}
+		articles.put(a);
 	}
 	
-	
-	public void addUser(User user) {
-		this.users.put(user);
-	}
-	
-	public void addArticle(Article article) {
-		this.articles.put(article);
-	}
-	
-	public void addOutfit(Outfit outfit) {
-		this.outfits.put(outfit);
-	}
-	
-	public void wears(User u, Article a) {
-		this.wears.put(new Edge(u,a,false));
-	}
-	
-	public void wears(User u, Outfit o) {
-		this.wears.put(new Edge(u,o,false));
-	}
-	
-	public void includes(Outfit o, Article a) {
-		this.includes.put(new Edge(o,a,false));
-	}
-	
-	public void matches(Article a1, Article a2) {
-		this.matches.put(new Edge(a1,a2,true));
-	}
-
-	
-	public void liked(User u, Outfit o) {
-		this.liked.put(new Edge(u,o,false));
-		
-		//If a user likes an outfit, it means she likes each of the articles in the outfit
-		
-		Edge temp = (Edge) o.outputEdges.head;
-		while(temp.next!=null) {
-			
-			liked(u,(Article) temp.oppositeNode(o));
+	public void addWardrobe(List articles) {
+		Article temp = (Article) articles.head;
+		while(temp!=null) {
+			addArticle(temp);
 		}
 	}
 	
-	public void liked(User u, Article a) {
-		this.liked.put(new Edge(u,a,false));
+	public void addOutfit(User u,List items) {
+		Outfit o = new Outfit(items);
+		outfits.put(o);
+		u.getAdjacency().put(o);
 	}
 	
-	public void created(User u, Outfit o) {
-		this.created.put(new Edge(u,o,false));
-		
-		//If an user creates an article, it means that she likes it
-		
-		liked(u,o);
+	public void addOutfit(List items) {
+		Outfit o = new Outfit(items);
+		outfits.put(o);
 	}
+	
+	public void addOutfit(User u, Outfit o) {
+		outfits.put(o);
+		u.getAdjacency().put(o);
+	}
+	
+	public void addUser(User u) {
+		users.put(u);
+	}
+	
+	
+	public List generate(User u,float[] metadata) {
+		List filtered = BFSfilter(u,metadata);
+		List generated = new List();
+		Outfit o = (Outfit)filtered.head;
+		while(o!=null) {
+			Article temp = (Article) o.getAdjacency().head;
+			while(temp!=null) {
+				List items = generateOutfit(temp,new int[] {0,0,0,0});
+				if(!items.isEmpty())
+					generated.put(new Outfit(items));
+				temp=(Article)temp.next;
+			}
+			o=(Outfit) o.next;
+		}
+		return generated;
+	}
+	
+	public List generateOutfit(Article a, int[] types) {
+		List items = new List();
+		Article temp = (Article) a.Adjacency.max.oppositeNode(a);
+		types[a.type-1]=1;
+		if(types[temp.type-1]==0) {
+			items.put(generateOutfit(temp,types));
+			items.put(temp);
+		}
+		//temp=(Article) temp.next;
+		return items;
+	}
+	
+	public List BFSfilter(User u, float[] metadata) {
+		List adj = u.getAdjacency();
+		List output=new List();
+		Outfit temp = (Outfit) adj.head;
+		while(temp!=null) {
+			if(Graph.distance(temp.metadata, metadata)<=0.25) {
+				output.put(temp);;
+			}
+			temp=(Outfit)temp.next;
+		}
+		
+		return output;
+	}
+	
+	
+	public static float distance(float[] m1, float[] m2) {
+		return (float) Math.sqrt(Math.pow(m1[0]-m2[0], 2)+Math.pow(m1[1]-m2[1], 2));
+	}
+	
 }
